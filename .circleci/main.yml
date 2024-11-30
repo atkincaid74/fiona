@@ -146,8 +146,7 @@ jobs:
 
 workflows:
   deploy:
-    when:
-      - not: << pipeline.parameters.is_pr >>
+    when: << ! pipeline.parameters.is_pr >>
     jobs:
       - deploy:
           filters:
