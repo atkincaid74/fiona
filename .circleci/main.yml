@@ -146,7 +146,7 @@ jobs:
 
 workflows:
   deploy:
-    when: << ! pipeline.parameters.is_pr >>
+    when: \<< ! pipeline.parameters.is_pr >>
     jobs:
       - deploy:
           filters:
@@ -154,7 +154,7 @@ workflows:
               only: master
 
   test:
-    when: << pipeline.parameters.is_pr >>
+    when: \<< pipeline.parameters.is_pr >>
     jobs:
       - deploy-non-promoted
       - static-analysis
