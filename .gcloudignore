@@ -21,7 +21,6 @@ __pycache__/
 .idea
 .python-version
 .DS_Store
-*.pem
 venv
 htmlcov
 .coverage
@@ -29,3 +28,5 @@ coverage
 
 # Ignore generated credentials from google-github-actions/auth
 gha-creds-*.json
+
+.venv

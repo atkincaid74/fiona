@@ -1,0 +1,29 @@
+version: 2.1
+
+
+setup: true
+
+
+orbs:
+  continuation: circleci/continuation@1
+
+
+workflows:
+  setup:
+    jobs:
+      - continuation/continue:
+          filters:
+            tags:
+              only: /^v.*/
+          configuration_path: ".circleci/main.yml"
+          parameters: /home/circleci/params.json
+          pre-steps:
+            - run:
+                command: |
+                  if [ -z "${CIRCLE_PULL_REQUEST##*/}" ]
+                  then
+                    IS_PR=false
+                  else
+                    IS_PR=true
+                  fi
+                  echo '{ "is_pr": '$IS_PR' }' >> /home/circleci/params.json

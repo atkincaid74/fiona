@@ -1,0 +1,162 @@
+version: 2.1
+
+
+parameters:
+  is_pr:
+    type: boolean
+    default: false
+
+
+executors:
+  python-executor:
+    docker:
+      - image: google/cloud-sdk:latest
+
+
+commands:
+  install-python-dependencies:
+    steps:
+      - run:
+          name: Install Python and dependencies
+          command: |
+            apt-get update && apt-get install -y python3 python3-pip
+            pip3 install toml pre-commit
+
+  extract-version:
+    steps:
+      - run:
+          name: Extract and sanitize version from pyproject.toml
+          command: |
+            VERSION=$(python3 -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+            VERSION_SANITIZED=$(echo $VERSION | sed 's/[^a-zA-Z0-9.-]/-/g')
+            echo "export APP_VERSION=$VERSION_SANITIZED" >> $BASH_ENV
+
+  validate-branch-version:
+    steps:
+      - run:
+          name: Generate GCP-compatible branch version name
+          command: |
+            BRANCH_VERSION=$(echo $CIRCLE_BRANCH | sed 's/[^a-zA-Z0-9.-]/-/g')
+            echo "export BRANCH_VERSION=$BRANCH_VERSION" >> $BASH_ENV
+
+  decode-credentials:
+    steps:
+      - run:
+          name: Decode GOOGLE_CREDENTIALS
+          command: |
+            echo $GOOGLE_CREDENTIALS | base64 --decode > key.json
+
+  authenticate-gcloud:
+    steps:
+      - run:
+          name: Authenticate with Google Cloud
+          command: |
+            gcloud auth activate-service-account --key-file key.json
+
+  set-gcloud-project:
+    steps:
+      - run:
+          name: Set Google Project
+          command: |
+            gcloud config set project $GOOGLE_PROJECT_ID
+
+  deploy-app-engine:
+    steps:
+      - run:
+          name: Deploy to App Engine
+          command: |
+            gcloud app deploy --quiet --version=$APP_VERSION
+
+  deploy-non-promoted:
+    steps:
+      - run:
+          name: Deploy to App Engine (Non-Promoted)
+          command: |
+            gcloud app deploy --quiet --version=$BRANCH_VERSION --no-promote
+
+  run-pre-commit:
+    steps:
+      - run:
+          name: Run pre-commit
+          command: |
+            pre-commit run --all-files
+
+  verify-version-change:
+    steps:
+      - run:
+          name: Check for version number change
+          command: |
+            PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | python3 -c "import toml,sys; print(toml.load(sys.stdin)['project']['version'])")
+            CURRENT_VERSION=$(python3 -c "import toml; print(toml.load(open('pyproject.toml'))['project']['version'])")
+            if [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
+              echo "Version number has NOT changed! Previous: $PREVIOUS_VERSION, Current: $CURRENT_VERSION"
+              exit 1
+            else
+              echo "Version number has changed. Previous: $PREVIOUS_VERSION, Current: $CURRENT_VERSION"
+              exit 0
+            fi
+
+  run-pytests:
+    steps:
+      - run:
+          name: Placeholder for pytests
+          command: |
+            echo "Pytests would run here"
+            exit 0
+
+
+jobs:
+  deploy:
+    executor: python-executor
+    steps:
+      - checkout
+      - install-python-dependencies
+      - decode-credentials
+      - authenticate-gcloud
+      - set-gcloud-project
+      - extract-version
+      - deploy-app-engine
+
+  deploy-non-promoted:
+    executor: python-executor
+    steps:
+      - checkout
+      - install-python-dependencies
+      - decode-credentials
+      - authenticate-gcloud
+      - set-gcloud-project
+      - validate-branch-version
+      - deploy-non-promoted
+
+  static-analysis:
+    executor: python-executor
+    steps:
+      - checkout
+      - install-python-dependencies
+      - run-pre-commit
+      - verify-version-change
+
+  run-tests:
+    executor: python-executor
+    steps:
+      - checkout
+      - install-python-dependencies
+      - run-pytests
+
+
+workflows:
+  deploy:
+    when:
+      - not: << pipeline.parameters.is_pr >>
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only: master
+
+  test:
+    when: << pipeline.parameters.is_pr >>
+    jobs:
+      - deploy-non-promoted
+      - static-analysis
+      - run-tests
