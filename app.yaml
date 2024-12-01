@@ -1,0 +1,8 @@
+runtime: python312
+
+instance_class: F2
+entrypoint: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port $PORT --timeout-keep-alive 120
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1

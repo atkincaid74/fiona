@@ -1,9 +1,19 @@
 [project]
 name = "fiona"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "Fiona: Flexible Integration for Organization, Notifications & Automation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115.5",
+    "fastapi[standard]>=0.115.5",
+    "uvicorn>=0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.1",
+]
+ci = [
+    "pre-commit>=4.0.1",
+    "toml>=0.10.2",
 ]
