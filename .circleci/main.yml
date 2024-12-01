@@ -49,7 +49,7 @@ commands:
           name: Extract and sanitize version from pyproject.toml
           command: |
             VERSION=$(uv run python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
-            VERSION_SANITIZED=$(echo $VERSION | sed 's/[^a-zA-Z0-9.-]/-/g')
+            VERSION_SANITIZED=$(echo $VERSION | sed 's/[^a-zA-Z0-9]/-/g')
             echo "export APP_VERSION=$VERSION_SANITIZED" >> $BASH_ENV
 
   validate-branch-version:
