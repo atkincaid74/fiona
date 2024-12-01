@@ -7,20 +7,41 @@ parameters:
     default: false
 
 
+orbs:
+  gcp-cli: circleci/gcp-cli
+
+
 executors:
   python-executor:
     docker:
-      - image: google/cloud-sdk:latest
+      - image: cimg/python:3.12
+    resource_class: small
 
 
 commands:
-  install-python-dependencies:
+  install-uv:
     steps:
       - run:
-          name: Install Python and dependencies
+          name: Install uv
           command: |
-            apt-get update && apt-get install -y python3 python3-pip
-            pip3 install toml pre-commit
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  install-python-dependencies:
+    steps:
+      - install-uv
+      - run:
+          name: Install Python Dependencies
+          command: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            uv sync --frozen
+
+  install-python-ci-dependencies:
+    steps:
+      - install-uv
+      - run:
+          name: Install Python CI Dependencies
+          command: |
+            uv sync --frozen --only-group ci
 
   extract-version:
     steps:
@@ -107,21 +128,26 @@ commands:
 
 jobs:
   deploy:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.12.5
+    resource_class: small
     steps:
       - checkout
-      - install-python-dependencies
+      - gcp-cli/install
       - decode-credentials
       - authenticate-gcloud
       - set-gcloud-project
+      - install-python-ci-dependencies
       - extract-version
       - deploy-app-engine
 
   deploy-non-promoted:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.12.5
+    resource_class: small
     steps:
       - checkout
-      - install-python-dependencies
+      - gcp-cli/install
       - decode-credentials
       - authenticate-gcloud
       - set-gcloud-project
@@ -129,15 +155,19 @@ jobs:
       - deploy-non-promoted
 
   static-analysis:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.12.5
+    resource_class: small
     steps:
       - checkout
-      - install-python-dependencies
+      - install-python-ci-dependencies
       - run-pre-commit
       - verify-version-change
 
   run-tests:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.12.5
+    resource_class: small
     steps:
       - checkout
       - install-python-dependencies

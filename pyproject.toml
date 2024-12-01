@@ -13,3 +13,7 @@ dependencies = [
 dev = [
     "pre-commit>=4.0.1",
 ]
+ci = [
+    "pre-commit>=4.0.1",
+    "toml>=0.10.2",
+]
