@@ -20,10 +20,11 @@ workflows:
           pre-steps:
             - run:
                 command: |
-                  if [ -z "${CIRCLE_PULL_REQUEST##*/}" ]
+                  if [ -z "${CIRCLE_PULL_REQUEST}" ]
                   then
                     IS_PR=false
                   else
                     IS_PR=true
                   fi
-                  echo '{ "is_pr": '$IS_PR' }' >> /home/circleci/params.json
+                  echo '{ "is_pr": '$IS_PR' }' > /home/circleci/params.json
+                  echo "IS_PR is set to: $IS_PR"
