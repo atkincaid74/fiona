@@ -100,7 +100,7 @@ commands:
       - run:
           name: Run pre-commit
           command: |
-            pre-commit run --all-files
+            uvx pre-commit run --all-files
 
   verify-version-change:
     steps:
