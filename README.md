@@ -8,8 +8,6 @@
 
 ## Secrets
 
-| name          | purpose |
-|---------------|---------|
-| logfire_token |         |
-|               |         |
-|               |         |
+| name          | purpose                 |
+|---------------|-------------------------|
+| logfire_token | write token for logfire |
