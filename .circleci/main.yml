@@ -8,7 +8,7 @@ parameters:
 
 
 orbs:
-  gcp-cli: circleci/gcp-cli
+  gcp-cli: circleci/gcp-cli@3.3.0
 
 
 executors:
