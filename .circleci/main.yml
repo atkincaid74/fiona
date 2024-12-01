@@ -107,8 +107,25 @@ commands:
       - run:
           name: Check for version number change
           command: |
+            # Determine the target branch (default to empty if not a pull request)
+            TARGET_BRANCH=$(echo ${CIRCLE_PULL_REQUEST:-} | sed -n 's#.*/##p')
+
+            # Default to master if TARGET_BRANCH is empty
+            TARGET_BRANCH=${TARGET_BRANCH:-master}
+
+            # Skip version check if the target branch is not master
+            if [ "$TARGET_BRANCH" != "master" ]; then
+              echo "Skipping version change check: target branch is $TARGET_BRANCH"
+              exit 0
+            fi
+
+            # Fetch previous version from master
             PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | uv run python -c "import toml,sys; print(toml.load(sys.stdin)['project']['version'])")
+
+            # Fetch current version from the current branch
             CURRENT_VERSION=$(uv run python -c "import toml; print(toml.load(open('pyproject.toml'))['project']['version'])")
+
+            # Compare versions
             if [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
               echo "Version number has NOT changed! Previous: $PREVIOUS_VERSION, Current: $CURRENT_VERSION"
               exit 1
