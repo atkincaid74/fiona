@@ -193,22 +193,16 @@ jobs:
 
 workflows:
   deploy:
-    unless: \<< pipeline.parameters.is_pr >>
+    unless: << pipeline.parameters.is_pr >>
     jobs:
       - deploy:
-          pre-steps:
-            - run:
-                command: echo "Deploy workflow running with IS_PR=\<< pipeline.parameters.is_pr >>"
           filters:
             branches:
               only: master
 
   test:
-    when: \<< pipeline.parameters.is_pr >>
+    when: << pipeline.parameters.is_pr >>
     jobs:
-      - deploy-non-promoted:
-          pre-steps:
-            - run:
-                command: echo "Deploy workflow running with IS_PR=\<< pipeline.parameters.is_pr >>"
+      - deploy-non-promoted
       - static-analysis
       - run-tests
