@@ -48,7 +48,7 @@ commands:
       - run:
           name: Extract and sanitize version from pyproject.toml
           command: |
-            VERSION=$(python3 -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+            VERSION=$(uv run python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
             VERSION_SANITIZED=$(echo $VERSION | sed 's/[^a-zA-Z0-9.-]/-/g')
             echo "export APP_VERSION=$VERSION_SANITIZED" >> $BASH_ENV
 
@@ -107,8 +107,8 @@ commands:
       - run:
           name: Check for version number change
           command: |
-            PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | python3 -c "import toml,sys; print(toml.load(sys.stdin)['project']['version'])")
-            CURRENT_VERSION=$(python3 -c "import toml; print(toml.load(open('pyproject.toml'))['project']['version'])")
+            PREVIOUS_VERSION=$(git show HEAD~1:pyproject.toml | uv run python -c "import toml,sys; print(toml.load(sys.stdin)['project']['version'])")
+            CURRENT_VERSION=$(uv run python -c "import toml; print(toml.load(open('pyproject.toml'))['project']['version'])")
             if [ "$PREVIOUS_VERSION" = "$CURRENT_VERSION" ]; then
               echo "Version number has NOT changed! Previous: $PREVIOUS_VERSION, Current: $CURRENT_VERSION"
               exit 1
